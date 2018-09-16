@@ -141,8 +141,122 @@ fn main() {
         } // `x` dropped here while still borrowed
           // assert_eq!(*r, 1);
     } // borrowed value needs to live until here
+
+    let v0 = 3;
+    {
+        let mut v = Vec::new();
+        v.push(v0);
+        {
+            let _r = &v[0];
+        }
+    }
+
+    static WORTH_POINTING_AT: i32 = 1000;
+    let r: &'static i32 = &WORTH_POINTING_AT;
+    f(r);
+
+    let x = 10;
+    g(&x);
+    // f(&x); x does not live long enough
+
+    let s: &i32;
+    {
+        let parabola = [9, 4, 1, 0, 1, 4, 9];
+        // s = smallest(&parabola); // `parabola` does not live long enough
+    }
+
+    struct S<'a> {
+        r: &'a i32,
+    }
+
+    let s: &i32;
+    {
+        let x = 10;
+        let s = S { r: &x };
+    }
+
+    struct T<'a> {
+        s: S<'a>,
+    }
+
+    let x = 32;
+    let s = S { r: &x };
+    let _t = T { s: s };
+
+    struct S2<'a> {
+        x: &'a i32,
+        y: &'a i32,
+    }
+
+    let x = 10;
+    let r: &i32;
+    {
+        let y = 20;
+        {
+            // x and y have same lifetime ('a).
+            let s = S2 { x: &x, y: &y };
+            // x and r have same lifetime
+            // so, x and r and y have same lifetime
+            // r = s.x;
+        }
+    } // y drop here, violate lifetime ('a)
+
+    struct S3<'a, 'b> {
+        x: &'a i32,
+        y: &'b i32,
+    }
+
+    let x = 10;
+    let r: &i32;
+    {
+        let y = 20;
+        {
+            let s = S3 { x: &x, y: &y };
+            r = s.x;
+        }
+    }
 }
 
 fn factorial(n: usize) -> usize {
     (1..n + 1).fold(1, |a, b| a * b)
+}
+
+static mut STASH: &i32 = &128;
+// fn f(p: &i32) {
+// ↑ is equal to ↓
+// fn f<'a>(p: &'a i32) {
+// STASH is static, need static lifetime for `p`
+fn f(p: &'static i32) {
+    unsafe {
+        STASH = p;
+    }
+}
+
+fn g<'a>(p: &'a i32) {}
+
+fn smallest<'a>(v: &'a [i32]) -> &'a i32 {
+    let mut s = &v[0];
+    for r in &v[1..] {
+        if *r < *s {
+            s = r;
+        }
+    }
+    s
+}
+
+struct StringTable {
+    elements: Vec<String>,
+}
+
+impl StringTable {
+    // fn find_by_prefix(&self, prefix: &str) -> Option<&String> {
+    fn find_by_prefix<'a, 'b>(&'a self, prefix: &'b str) -> Option<&'a String> {
+        for i in 0..(self.elements.len()) {
+            let el = &self.elements[i];
+            if el.starts_with(prefix) {
+                return Some(el);
+            }
+        }
+        return None;
+    }
 }
