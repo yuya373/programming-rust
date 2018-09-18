@@ -215,6 +215,82 @@ fn main() {
             r = s.x;
         }
     }
+
+    let v = vec![4, 8, 19, 27, 34, 10];
+    let r = &v;
+    // cannot move out of `v`
+    // v is borrowed
+    // let aside = v;
+
+    r[0];
+
+    let v = vec![4, 8, 19, 27, 34, 10];
+    {
+        // `r` borrow `v`
+        let r = &v;
+        r[0];
+    } // r drop here
+      // move!
+    let aside = v;
+
+    fn extend(vec: &mut Vec<f64>, slice: &[f64]) {
+        for elt in slice {
+            vec.push(*elt);
+        }
+    }
+
+    let mut wave = Vec::new();
+    let head = vec![0.0, 1.0];
+    let tail = [0.0, -1.0];
+    extend(&mut wave, &head);
+    extend(&mut wave, &tail);
+
+    assert_eq!(wave, vec![0.0, 1.0, 0.0, -1.0]);
+    // cannot borrow `wave` as immutable
+    // because it is also borrowed as mutable
+    // extend(&mut wave, &wave);
+
+    {
+        let mut_rw = &mut wave;
+    }
+    let rw = &wave;
+
+    let mut x = 10;
+    // immutable borrow
+    let r1 = &x;
+    // immutable borrow
+    let r2 = &x;
+    // cannot assign `x`
+    // `x` is borrowed
+    // x += 10;
+
+    let mut y = 20;
+    // mutable borrow
+    let m1 = &mut y;
+    // cannot borrow `y` as mutable more than once at a time
+    // let m2 = &mut y;
+
+    // cannot use `y`
+    // `y` was mutably borrowed
+    // let z = y;
+
+    let mut w = (107, 109);
+    // immutable reference
+    let r = &w;
+    // reborrowing immutable as immutable
+    let r0 = &r.0;
+    // cannot reborrow immutable as mutable
+    // let m1 = &mut r.1;
+
+    let mut v = (136, 139);
+    let m = &mut v;
+    // reborrowing mutable from mutable
+    let m0 = &mut m.0;
+    *m0 = 137;
+    // reborrowing immutable from mutable
+    let r1 = &m.1;
+    // cannot use `v.1` because it was mutably borrowed
+    v.1;
 }
 
 fn factorial(n: usize) -> usize {
