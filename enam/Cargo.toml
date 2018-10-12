@@ -1,0 +1,7 @@
+[package]
+name = "enam"
+version = "0.1.0"
+authors = ["Yuya Minami <yuya.minami@rebase.co.jp>"]
+edition = "2018"
+
+[dependencies]
