@@ -54,9 +54,19 @@ impl TimeUnit {
 }
 #[derive(Debug)]
 struct Point3d(f32, f32, f32);
+#[derive(Debug)]
 enum Shape {
     Sphere { center: Point3d, radius: f32 },
     Cuboid { corner1: Point3d, corner2: Point3d },
+}
+
+impl Shape {
+    fn center(&self) -> &Point3d {
+        match self {
+            Shape::Sphere { center, .. } => center,
+            Shape::Cuboid { corner1, .. } => corner1, // TODO FIX
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -119,6 +129,28 @@ struct TreeNode<T> {
 enum BinaryTree<T> {
     Empty,
     NonEmpty(Box<TreeNode<T>>),
+}
+
+impl<T: Ord> BinaryTree<T> {
+    fn add(&mut self, value: T) {
+        use self::BinaryTree::*;
+        match *self {
+            Empty => {
+                *self = NonEmpty(Box::new(TreeNode {
+                    element: value,
+                    left: Empty,
+                    right: Empty,
+                }))
+            }
+            NonEmpty(ref mut node) => {
+                if value <= node.element {
+                    node.left.add(value)
+                } else {
+                    node.right.add(value)
+                }
+            }
+        }
+    }
 }
 
 fn main() {
@@ -203,4 +235,52 @@ fn main() {
     let saturn_tree = NonEmpty(Box::new(saturn));
 
     println!("binray tree: {:?}", saturn_tree);
+
+    let point = Point3d(1.0, 1.0, 0.0);
+    let sphere = Shape::Sphere {
+        center: point,
+        radius: 8.0,
+    };
+
+    match sphere {
+        Shape::Sphere {
+            ref center, // use ref to `borrow` sphere instead of `move`
+            .. // ommit other field
+        } => {
+            println!("center: {:?}", center);
+            println!("sphere: {:?}", sphere); // sphere is not moved
+        }
+        _ => println!("aaa"),
+    }
+
+    match sphere {
+        Shape::Sphere { center, .. } => {
+            println!("center: {:?}", center);
+            // println!("sphere: {:?}", sphere); // error: use of moved value
+        }
+        _ => println!("aaa"),
+    }
+
+    let point = Point3d(1.0, 1.0, 0.0);
+    let sphere = Shape::Sphere {
+        center: point,
+        radius: 8.0,
+    };
+
+    match sphere.center() {
+        &Point3d(x, y, z) => println!("x: {}, y: {}, z: {}", x, y, z),
+    }
+
+    let numbers = vec![0, 1, 2, 3];
+    let sum = numbers.iter().fold(0, |a, num| a + num);
+    println!("sum: {}", sum);
+
+    let sum = numbers.iter().fold(0, |a, &num| a + num);
+    println!("sum: {}", sum);
+
+    let mut tree = BinaryTree::Empty;
+    tree.add("Mercury");
+    tree.add("Venus");
+
+    println!("Tree: {:?}", tree);
 }
