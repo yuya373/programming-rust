@@ -24,9 +24,11 @@ use std::hash::Hash;
 fn top_ten<T: Debug + Hash + Eq>(values: &Vec<T>) {
     use std::collections::HashMap;
 
-    let mut store = HashMap::new();
+    let mut store: HashMap<&T, i64> = HashMap::new();
 
-    for v in values {
+    for i in 0..values.len() {
+        let v = &values[i];
+
         if let Some(count) = store.get(v) {
             store.insert(v, count + 1);
         } else {
@@ -34,7 +36,14 @@ fn top_ten<T: Debug + Hash + Eq>(values: &Vec<T>) {
         }
     }
 
-    // TODO
+    let mut v: Vec<(&T, i64)> = store.into_iter().collect::<Vec<(&T, i64)>>();
+    v.sort_by(|(_key1, value1), (_key2, value2)| value2.cmp(value1));
+
+    for i in 0..10 {
+        if let Some((key, value)) = v.get(i) {
+            println!("No.{}: {:?} -> {}", i + 1, key, value);
+        }
+    }
 }
 
 trait Vegetable {}
@@ -112,6 +121,13 @@ fn main() -> std::io::Result<()> {
     say_hello_generic(&mut sink);
 
     assert_eq!('$'.is_emoji(), false);
+
+    let v = vec![
+        "a", "aa", "aa", "aaa", "aaa", "aaa", "aaaa", "aaaa", "aaaa", "aaaa", "b", "bb", "bb",
+        "bbb", "bbb", "bbb", "bbbb", "bbbb", "bbbb", "bbbb", "c", "cc", "cc", "ccc", "ccc", "ccc",
+        "cccc", "cccc", "cccc", "cccc",
+    ];
+    top_ten(&v);
 
     Ok(())
 }
